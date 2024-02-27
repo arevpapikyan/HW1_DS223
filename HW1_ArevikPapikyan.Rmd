@@ -1,0 +1,85 @@
+---
+title: "Homework on Bass Model"
+author: "Arevik Papikyan"
+date: "2024-02-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, warning=FALSE}
+library(ggplot2)
+```
+
+Chosen Innovation: https://time.com/collection/best-inventions-2023/6324054/sonos-era-300/
+
+The choice of the Bose Soundbar 700 as a look-alike innovation is justified by its similar product category, target market, and competitive positioning compared to the original innovation. Both the Bose Soundbar 700 and the original innovation share characteristics such as high-quality audio performance, sleek design, and advanced technology, making them suitable for comparison in terms of adoption patterns and market dynamics.
+\vspace{1cm}
+
+Bose sales data (in billion USD)
+```{r}
+bose_sales <- c(`2017` = 3.80, `2018` = 4, `2019` = 4, `2020` = 3.60,
+                `2021` = 3.20, `2022` = 3, `2023` = 3)
+```
+
+Function to estimate Bass diffusion model parameters (p and q)
+```{r}
+estimate_bass_parameters <- function(sales_data) {
+  q <- (sales_data[2] - sales_data[1]) / sales_data[1]
+  p <- (sales_data[2] + q) / sum(sales_data)
+  return(c(p, q))
+}
+```
+
+Estimate Bass model parameters
+```{r}
+bass_parameters <- estimate_bass_parameters(bose_sales)
+cat("Estimated Bass parameters (p, q): ", bass_parameters, "\n")
+```
+Function to predict cumulative adopters using the Bass diffusion model
+```{r}
+predict_cumulative_adopters <- function(p, q, m, t) {
+  A <- m * ((p + q)^2 / p) * (1 - exp(-(p + q) * t)) / (1 + q / p * exp(-(p + q) * t))^2
+  return(A)
+}
+```
+
+Initial market size estimate in thousands
+```{r}
+initial_market_size <- bose_sales[1] * 1000
+```
+
+Calculate cumulative adopters for each period using the Bass model
+```{r}
+cumulative_adopters <- sapply(1:length(bose_sales), function(t)
+  predict_cumulative_adopters(bass_parameters[1], bass_parameters[2],
+                              initial_market_size, t))
+```
+
+Create data frame for plotting
+```{r}
+df <- data.frame(Period = paste("Q", 1:length(bose_sales), "'", sep=""),
+                 Cumulative_Adopters = cumulative_adopters)
+```
+
+Plot using ggplot2
+```{r}
+ggplot(df, aes(x = Period, y = Cumulative_Adopters)) +
+  geom_point(color = "blue", size = 3) +  # Add points
+  labs(title = "Diffusion of Innovation (Bose Soundbar 700)",
+       x = "", y = "Cumulative Adopters (in thousands)") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),  # Remove x-axis labels
+        axis.title.x = element_blank()) +  # Remove x-axis title
+  geom_text(aes(label = Period), vjust = -0.5, size = 4, color = "red")
+```
+
+
+
+
+
+
